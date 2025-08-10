@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Registro de Cursos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="bg-blue-600 py-4 px-6">
+            <h1 class="text-2xl font-bold text-white">Formulario de Registro</h1>
+            <p class="text-blue-100">Complete sus datos para inscribirse en nuestros cursos</p>
+        </div>
+
+        <form id="registrationForm" class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" required class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label for="apellidos" class="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+                    <input type="text" id="apellidos" name="apellidos" required class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label for="dni" class="block text-sm font-medium text-gray-700 mb-1">DNI</label>
+                    <input type="text" id="dni" name="dni" required pattern="[0-9]{8}[A-Za-z]{1}" title="Introduzca un DNI válido (8 números y 1 letra)" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seleccione un curso</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="curso" value="Curso de Office" required>
+                            <span>Curso de Office</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="curso" value="Competencias Digitales">
+                            <span>Competencias Digitales</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="curso" value="Informática Básica">
+                            <span>Informática Básica</span>
+                        </label>
+                    </div>
+                    <!-- La contraseña se generará en el servidor o se puede eliminar si no es relevante para el registro -->
+                    <p class="text-xs text-gray-500 mt-1">La contraseña se genera automáticamente con tu DNI + 3 primeras letras del nombre (gestionado por el servidor)</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                    Inscribirse
+                </button>
+            </div>
+        </form>
+        
+        <div id="confirmationMessage" class="hidden p-6 bg-green-50 border-t border-green-200">
+            <div class="flex items-center space-x-3">
+                <svg class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <div>
+                    <h3 class="text-lg font-medium text-green-800">¡Inscripción completada!</h3>
+                    <p class="text-green-600">Ya se pondrá en contacto con usted el instructor.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registrationForm');
+            const confirmationMessage = document.getElementById('confirmationMessage');
+            
+            // Form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Validate form
+                if (!form.checkValidity()) {
+                    form.classList.add('shake');
+                    setTimeout(() => form.classList.remove('shake'), 500);
+                    return;
+                }
+                
+                // Get form data
+                const formData = {
+                    nombre: document.getElementById('nombre').value,
+                    apellidos: document.getElementById('apellidos').value,
+                    dni: document.getElementById('dni').value,
+                    email: document.getElementById('email').value,
+                    curso: document.querySelector('input[name="curso"]:checked').value,
+                    fecha: new Date().toLocaleString()
+                };
+
+                try {
+                    const response = await fetch('http://localhost:8080/api/registro', { // Asegúrate de que la URL sea correcta
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Show confirmation message
+                        confirmationMessage.classList.remove('hidden');
+                        confirmationMessage.classList.add('confirmation-animation');
+                        
+                        // Scroll to confirmation
+                        confirmationMessage.scrollIntoView({ behavior: 'smooth' });
+                        
+                        // Reset form after delay
+                        setTimeout(() => {
+                            form.reset();
+                            confirmationMessage.classList.add('hidden');
+                            confirmationMessage.classList.remove('confirmation-animation');
+                        }, 5000);
+                    } else {
+                        alert('Error al registrar la inscripción: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Error al enviar los datos:', error);
+                    alert('Error de conexión con el servidor. Inténtelo de nuevo.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
